@@ -42,7 +42,6 @@ class SharingDialog extends OwncloudPage {
 	 * @var string $path
 	 */
 	protected $path = '/index.php/apps/files/';
-
 	private $shareWithFieldXpath = ".//*[contains(@class,'shareWithField')]";
 	private $shareWithTooltipXpath = "/..//*[@class='tooltip-inner']";
 	private $shareWithAutocompleteListXpath = ".//ul[contains(@class,'ui-autocomplete')]";
@@ -52,10 +51,11 @@ class SharingDialog extends OwncloudPage {
 	private $suffixToIdentifyRemoteUsers = " Federated";
 	private $sharerInformationXpath = ".//*[@class='reshare']";
 	private $sharedWithAndByRegEx = "^(?:[A-Z]\s)?Shared with you(?: and the group (.*))? by (.*)$";
-	private $permissionsFieldByUserName = ".//*[@id='shareWithList']//*[@class='has-tooltip username' and .='%s']/../..";
-	private $permissionsFieldByGroupName = ".//*[@id='shareWithList']//*[@class='has-tooltip username' and .='%s (group)']/../..";
+	private $permissionsFieldByUserName = "//*[@id='shareWithList']//span[contains(text(), '%s')]/parent::li";
+	private $permissionsFieldByGroupName = "//*[@id='shareWithList']//span[contains(text(), '%s (group)')]/parent::li";
 	private $permissionLabelXpath = ".//label[@for='%s']";
 	private $showCrudsXpath = ".//span[@class='icon icon-settings-dark']";
+	private $shareOptionsXpath = "//div[@class='shareOption']";
 	private $publicLinksShareTabXpath = ".//li[contains(@class,'subtab-publicshare')]";
 	private $publicLinksTabContentXpath = "//div[@id='shareDialogLinkList']";
 	private $noSharingMessageXpath = "//div[@class='noSharingPlaceholder']";
@@ -106,38 +106,16 @@ class SharingDialog extends OwncloudPage {
 	}
 
 	/**
-	 * click the dropdown button for share actions in the sidebar
-	 *
-	 * @return void
-	 */
-	public function toggleShareActionsDropDown() {
-		$showCrudsBtn = $this->find("xpath", $this->showCrudsXpath);
-		$this->assertElementNotNull(
-			$showCrudsBtn,
-			__METHOD__
-			. " xpath $this->showCrudsXpath could not find show-cruds button"
-		);
-		$showCrudsBtn->click();
-	}
-
-	/**
 	 * open the dropdown for share actions in the sidebar
 	 *
-	 * @return void
-	 */
-	public function openShareActionsDropDown() {
-		$this->toggleShareActionsDropDown();
-		$this->waitTillElementIsNotNull($this->shareWithListDetailsXpath);
-	}
-
-	/**
-	 * close the dropdown for share actions in the sidebar
+	 * @param string $type
+	 * @param string $receiver
 	 *
 	 * @return void
 	 */
-	public function closeShareActionsDropDown() {
-		$this->toggleShareActionsDropDown();
-		$this->waitTillElementIsNull($this->shareWithListDetailsXpath);
+	public function openShareActionsDropDown($type, $receiver) {
+		$this->toggleShareActions($type, $receiver);
+		$this->waitTillElementIsNotNull($this->shareWithListDetailsXpath);
 	}
 
 	/**
@@ -445,18 +423,11 @@ class SharingDialog extends OwncloudPage {
 	 *
 	 * @param string $userOrGroup
 	 * @param string $shareReceiverName
-	 * @param array $permissions [['permission' => 'yes|no']]
-	 * @param Session $session
 	 *
-	 * @return void
+	 * @return string
 	 * @throws ElementNotFoundException
 	 */
-	public function setSharingPermissions(
-		$userOrGroup,
-		$shareReceiverName,
-		$permissions,
-		Session $session
-	) {
+	public function toggleShareActions($userOrGroup, $shareReceiverName) {
 		if ($userOrGroup == "group") {
 			$xpathLocator = \sprintf(
 				$this->permissionsFieldByGroupName, $shareReceiverName
@@ -473,6 +444,14 @@ class SharingDialog extends OwncloudPage {
 			. " xpath $xpathLocator could not find share permissions field for user "
 			. $shareReceiverName
 		);
+		$shareOptionsLocator = $permissionsField->find("xpath", $this->shareOptionsXpath);
+		$shareOptionsStyle = $shareOptionsLocator->getAttribute("style");
+		// check if showCrudsBtn is already clicked i.e. the permissions and expiration field are displayed
+		// if showCrudsBtn is already clicked no need to click again
+		if ($shareOptionsStyle === "display: inline-block;") {
+			return $permissionsField;
+		}
+
 		$showCrudsBtn = $permissionsField->find("xpath", $this->showCrudsXpath);
 		$this->assertElementNotNull(
 			$showCrudsBtn,
@@ -481,6 +460,26 @@ class SharingDialog extends OwncloudPage {
 			. $shareReceiverName
 		);
 		$showCrudsBtn->click();
+		return $permissionsField;
+	}
+
+	/**
+	 *
+	 * @param string $userOrGroup
+	 * @param string $shareReceiverName
+	 * @param array $permissions [['permission' => 'yes|no']]
+	 * @param Session $session
+	 *
+	 * @return void
+	 * @throws ElementNotFoundException
+	 */
+	public function setSharingPermissions(
+		$userOrGroup,
+		$shareReceiverName,
+		$permissions,
+		Session $session
+	) {
+		$permissionsField = $this->toggleShareActions($userOrGroup, $shareReceiverName);
 		foreach ($permissions as $permission => $value) {
 			$value = \strtolower($value);
 
@@ -550,30 +549,7 @@ class SharingDialog extends OwncloudPage {
 		$permissions,
 		Session $session
 	) {
-		if ($userOrGroup == "group") {
-			$xpathLocator = \sprintf(
-				$this->permissionsFieldByGroupName, $shareReceiverName
-			);
-		} else {
-			$xpathLocator = \sprintf(
-				$this->permissionsFieldByUserName, $shareReceiverName
-			);
-		}
-		$permissionsField = $this->waitTillElementIsNotNull($xpathLocator);
-		$this->assertElementNotNull(
-			$permissionsField,
-			__METHOD__
-			. " xpath $xpathLocator could not find share permissions field for user "
-			. $shareReceiverName
-		);
-		$showCrudsBtn = $permissionsField->find("xpath", $this->showCrudsXpath);
-		$this->assertElementNotNull(
-			$showCrudsBtn,
-			__METHOD__
-			. " xpath $this->showCrudsXpath could not find show-cruds button for user "
-			. $shareReceiverName
-		);
-		$showCrudsBtn->click();
+		$permissionsField = $this->toggleShareActions($userOrGroup, $shareReceiverName);
 		foreach ($permissions as $permission => $value) {
 			$permissionCheckBox = $permissionsField->findField($permission);
 

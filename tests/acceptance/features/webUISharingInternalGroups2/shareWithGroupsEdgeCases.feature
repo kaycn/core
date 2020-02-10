@@ -108,3 +108,149 @@ Feature: Sharing files and folders with internal groups
     Then folder "simple-folder" should be marked as shared by "User Three" on the webUI
     When the user re-logs in as "user2" using the webUI
     Then folder "simple-folder" should be marked as shared with "User1" by "User Three" on the webUI
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions of the group
+	Given these users have been created with default attributes and without skeleton files:
+	  | username |
+	  | user1    |
+	  | user2    |
+	And user "user3" has been created with default attributes and skeleton files
+	And these groups have been created:
+	  | groupname |
+	  | user1     |
+	And user "user1" has been added to group "user1"
+	And user "user2" has been added to group "user1"
+	And user "user3" has shared folder "/simple-folder" with user "user1"
+	And user "user3" has shared folder "/simple-folder" with group "user1"
+	And user "user3" has logged in using the webUI
+	When the user sets the sharing permissions of group "user1" for "simple-folder" using the webUI to
+	  | delete | no |
+	  | share  | no |
+	Then the following permissions are seen for "simple-folder" in the sharing dialog for user "User One"
+	  | delete | yes |
+	  | share  | yes |
+	And the following permissions are seen for "simple-folder" in the sharing dialog for group "user1"
+	  | delete | no |
+	  | share  | no |
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions of the user
+    Given these users have been created with default attributes and without skeleton files:
+      | username |
+      | user1    |
+      | user2    |
+    And user "user3" has been created with default attributes and skeleton files
+    And these groups have been created:
+      | groupname |
+      | user1     |
+    And user "user1" has been added to group "user1"
+    And user "user2" has been added to group "user1"
+    And user "user3" has shared folder "/simple-folder" with user "user1"
+    And user "user3" has shared folder "/simple-folder" with group "user1"
+    And user "user3" has logged in using the webUI
+    When the user sets the sharing permissions of user "User One" for "simple-folder" using the webUI to
+      | delete | no |
+      | share  | no |
+    Then the following permissions are seen for "simple-folder" in the sharing dialog for user "User One"
+      | delete | no |
+      | share  | no |
+    And the following permissions are seen for "simple-folder" in the sharing dialog for group "user1"
+      | delete | yes |
+      | share  | yes |
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions of the both user and group
+    Given these users have been created with default attributes and without skeleton files:
+      | username |
+      | user1    |
+      | user2    |
+    And user "user3" has been created with default attributes and skeleton files
+    And these groups have been created:
+      | groupname |
+      | user1     |
+    And user "user1" has been added to group "user1"
+    And user "user2" has been added to group "user1"
+    And user "user3" has shared folder "/simple-folder" with user "user1"
+    And user "user3" has shared folder "/simple-folder" with group "user1"
+    And user "user3" has logged in using the webUI
+    When the user sets the sharing permissions of user "User One" for "simple-folder" using the webUI to
+      | delete | no |
+      | share  | no |
+    And the user sets the sharing permissions of group "user1" for "simple-folder" using the webUI to
+      | delete | no |
+      | share  | no |
+    Then the following permissions are seen for "simple-folder" in the sharing dialog for user "User One"
+      | delete | no |
+      | share  | no |
+    And the following permissions are seen for "simple-folder" in the sharing dialog for group "user1"
+      | delete | no |
+      | share  | no |
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions and expiration date of the group
+    Given these users have been created with default attributes and without skeleton files:
+      | username |
+      | user1    |
+      | user2    |
+    And user "user3" has been created with default attributes and skeleton files
+    And these groups have been created:
+      | groupname |
+      | user1     |
+    And user "user1" has been added to group "user1"
+    And user "user2" has been added to group "user1"
+    And user "user3" has shared folder "/simple-folder" with user "user1"
+    And user "user3" has shared folder "/simple-folder" with group "user1"
+    And user "user3" has logged in using the webUI
+    When the user sets the sharing permissions of group "user1" for "simple-folder" using the webUI to
+      | share  | no |
+    Then the following permissions are seen for "simple-folder" in the sharing dialog for group "user1"
+      | share  | no |
+    When the user changes expiration date for share of group "user1" to "+5 days" in the share dialog
+    Then the expiration date input field should be "+5 days" for the group "user1" in the share dialog
+    And the expiration date input field should be empty for the user "User One" in the share dialog
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions and expiration date of the user
+    Given these users have been created with default attributes and without skeleton files:
+      | username |
+      | user1    |
+      | user2    |
+    And user "user3" has been created with default attributes and skeleton files
+    And these groups have been created:
+      | groupname |
+      | user1     |
+    And user "user1" has been added to group "user1"
+    And user "user2" has been added to group "user1"
+    And user "user3" has shared folder "/simple-folder" with user "user1"
+    And user "user3" has shared folder "/simple-folder" with group "user1"
+    And user "user3" has logged in using the webUI
+    When the user sets the sharing permissions of user "User One" for "simple-folder" using the webUI to
+      | share  | no |
+    Then the following permissions are seen for "simple-folder" in the sharing dialog for user "User One"
+      | share  | no |
+    When the user changes expiration date for share of user "User One" to "+5 days" in the share dialog
+    Then the expiration date input field should be "+5 days" for the user "User One" in the share dialog
+    And the expiration date input field should be empty for the group "user1" in the share dialog
+
+  Scenario: Share file with a user and a group with same name and change sharing permissions and expiration date of both user and group
+    Given these users have been created with default attributes and without skeleton files:
+      | username |
+      | user1    |
+      | user2    |
+    And user "user3" has been created with default attributes and skeleton files
+    And these groups have been created:
+      | groupname |
+      | user1     |
+    And user "user1" has been added to group "user1"
+    And user "user2" has been added to group "user1"
+    And user "user3" has shared folder "/simple-folder" with user "user1"
+    And user "user3" has shared folder "/simple-folder" with group "user1"
+    And user "user3" has logged in using the webUI
+    When the user sets the sharing permissions of user "User One" for "simple-folder" using the webUI to
+      | share  | no |
+    And the user changes expiration date for share of user "User One" to "+5 days" in the share dialog
+    Then the following permissions are seen for "simple-folder" in the sharing dialog for user "User One"
+      | share  | no |
+    And the expiration date input field should be "+5 days" for the user "User One" in the share dialog
+    And the user sets the sharing permissions of group "user1" for "simple-folder" using the webUI to
+      | share  | no |
+    And the user changes expiration date for share of group "user1" to "+7 days" in the share dialog
+    And the following permissions are seen for "simple-folder" in the sharing dialog for group "user1"
+      | share  | no |
+
